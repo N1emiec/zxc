@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Trzy Formy Krok po Kroku</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .quiz-container {
+            background-color: #2d2d2d;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #4CAF50;
+            margin-top: 0;
+            font-size: 24px;
+        }
+        .translation-box {
+            background-color: #3d3d3d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .translation-label {
+            font-size: 11px;
+            color: #aaaaaa;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .translation-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ff9800;
+        }
+        .inputs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group {
+            background-color: #3d3d3d;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .input-label {
+            font-size: 11px;
+            color: #aaaaaa;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: 2px solid #555;
+            border-radius: 6px;
+            background-color: #1e1e1e;
+            color: white;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        input:disabled {
+            background-color: #262626;
+            color: #dddddd;
+            border-color: #444;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #next-btn {
+            background-color: #2196F3;
+            display: none;
+        }
+        #next-btn:hover {
+            background-color: #1976D2;
+        }
+        #feedback {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            min-height: 25px;
+            line-height: 1.4;
+        }
+        .correct { color: #4CAF50; }
+        .incorrect { color: #f44336; }
+        .counter {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <h1>Quiz: Trzy Formy Krok po Kroku</h1>
+        <div class="counter" id="counter-text"></div>
+        <div class="counter" id="progress-text" style="color: #4CAF50; margin-top: -5px; margin-bottom: 15px;"></div>
+        
+        <div class="translation-box">
+            <div class="translation-label">Tłumaczenie (Polski)</div>
+            <div class="translation-value" id="val-translation">-</div>
+        </div>
+
+        <div class="inputs-grid">
+            <div class="input-group">
+                <div class="input-label">Infinitive</div>
+                <input type="text" id="input-0" placeholder="Wpisz..." autocomplete="off">
+            </div>
+            <div class="input-group">
+                <div class="input-label">Past Simple</div>
+                <input type="text" id="input-1" placeholder="Wpisz..." autocomplete="off" disabled>
+            </div>
+            <div class="input-group">
+                <div class="input-label">Past Participle</div>
+                <input type="text" id="input-2" placeholder="Wpisz..." autocomplete="off" disabled>
+            </div>
+        </div>
+
+        <button id="next-btn" onclick="loadNextQuestion()">Następne słówko</button>
+
+        <div id="feedback"></div>
+    </div>
+
+    <script>
+        const originalWords = [
+            { infinitive: "arise", pastSimple: "arose", pastParticiple: "arisen", translation: "pojawić się" },
+            { infinitive: "awake", pastSimple: "awoke", pastParticiple: "awoken", translation: "obudzić" },
+            { infinitive: "be", pastSimple: "was / were", pastParticiple: "been", translation: "być" },
+            { infinitive: "bear", pastSimple: "bore", pastParticiple: "borne", translation: "znosić" },
+            { infinitive: "beat", pastSimple: "beat", pastParticiple: "beaten", translation: "pokonać, bić" },
+            { infinitive: "become", pastSimple: "became", pastParticiple: "become", translation: "stać się" },
+            { infinitive: "begin", pastSimple: "began", pastParticiple: "begun", translation: "zacząć" },
+            { infinitive: "behold", pastSimple: "beheld", pastParticiple: "beheld", translation: "ujrzeć" },
+            { infinitive: "bend", pastSimple: "bent", pastParticiple: "bent", translation: "zginać, nachylać" },
+            { infinitive: "bet", pastSimple: "bet", pastParticiple: "bet", translation: "założyć się" },
+            { infinitive: "bind", pastSimple: "bound", pastParticiple: "bound", translation: "wiązać, złączyć" },
+            { infinitive: "bite", pastSimple: "bit", pastParticiple: "bitten", translation: "ugryźć" },
+            { infinitive: "bleed", pastSimple: "bled", pastParticiple: "bled", translation: "krwawić" },
+            { infinitive: "blow", pastSimple: "blew", pastParticiple: "blown", translation: "wiać" },
+            { infinitive: "break", pastSimple: "broke", pastParticiple: "broken", translation: "złamać, zepsuć" },
+            { infinitive: "breed", pastSimple: "bred", pastParticiple: "bred", translation: "hodować, wychować" },
+            { infinitive: "bring", pastSimple: "brought", pastParticiple: "brought", translation: "przynieść" },
+            { infinitive: "broadcast", pastSimple: "broadcast", pastParticiple: "broadcast", translation: "nadawać" },
+            { infinitive: "build", pastSimple: "built", pastParticiple: "built", translation: "budować" },
+            { infinitive: "burn", pastSimple: "burned / burnt", pastParticiple: "burned / burnt", translation: "spalić" },
+            { infinitive: "burst", pastSimple: "burst", pastParticiple: "burst", translation: "wybuchnąć, rozerwać" },
+            { infinitive: "buy", pastSimple: "bought", pastParticiple: "bought", translation: "kupować" },
+            { infinitive: "cast", pastSimple: "cast", pastParticiple: "cast", translation: "rzucać" },
+            { infinitive: "catch", pastSimple: "caught", pastParticiple: "caught", translation: "złapać" },
+            { infinitive: "choose", pastSimple: "chose", pastParticiple: "chosen", translation: "wybrać" },
+            { infinitive: "cling", pastSimple: "clung", pastParticiple: "clung", translation: "przywrzeć, uczepić się" },
+            { infinitive: "come", pastSimple: "came", pastParticiple: "come", translation: "przyjść" },
+            { infinitive: "cost", pastSimple: "cost", pastParticiple: "cost", translation: "kosztować" },
+            { infinitive: "creep", pastSimple: "crept", pastParticiple: "crept", translation: "skradać się, pełzać" },
+            { infinitive: "cut", pastSimple: "cut", pastParticiple: "cut", translation: "ciąć" },
+            { infinitive: "deal", pastSimple: "dealt", pastParticiple: "dealt", translation: "radzić sobie" },
+            { infinitive: "dig", pastSimple: "dug", pastParticiple: "dug", translation: "kopać" },
+            { infinitive: "do", pastSimple: "did", pastParticiple: "done", translation: "zrobić" },
+            { infinitive: "draw", pastSimple: "drew", pastParticiple: "drawn", translation: "rysować" },
+            { infinitive: "dream", pastSimple: "dreamed / dreamt", pastParticiple: "dreamed / dreamt", translation: "marzyć" },
+            { infinitive: "drink", pastSimple: "drank", pastParticiple: "drunk", translation: "pić" },
+            { infinitive: "drive", pastSimple: "drove", pastParticiple: "driven", translation: "prowadzić samochód" },
+            { infinitive: "earn", pastSimple: "earned / earnt", pastParticiple: "earned / earnt", translation: "zarabiać, zasłużyć" },
+            { infinitive: "eat", pastSimple: "ate", pastParticiple: "eaten", translation: "jeść" },
+            { infinitive: "fall", pastSimple: "fell", pastParticiple: "fallen", translation: "upaść" },
+            { infinitive: "feed", pastSimple: "fed", pastParticiple: "fed", translation: "karmić" },
+            { infinitive: "fight", pastSimple: "fought", pastParticiple: "fought", translation: "walczyć" },
+            { infinitive: "find", pastSimple: "found", pastParticiple: "found", translation: "znaleźć" },
+            { infinitive: "fit", pastSimple: "fit / fitted", pastParticiple: "fit / fitted", translation: "pasować" },
+            { infinitive: "flee", pastSimple: "fled", pastParticiple: "fled", translation: "umykać, uciekać" },
+            { infinitive: "fly", pastSimple: "flew", pastParticiple: "flown", translation: "lecieć" },
+            { infinitive: "forbid", pastSimple: "forbade", pastParticiple: "forbidden", translation: "zabronić, zakazać" },
+            { infinitive: "forecast", pastSimple: "forecast", pastParticiple: "forecast", translation: "przewidywać" },
+            { infinitive: "forget", pastSimple: "forgot", pastParticiple: "forgotten", translation: "zapomnieć" },
+            { infinitive: "forgive", pastSimple: "forgave", pastParticiple: "forgiven", translation: "wybaczyć" },
+            { infinitive: "freeze", pastSimple: "froze", pastParticiple: "frozen", translation: "zamarzać, zamrażać" },
+            { infinitive: "get", pastSimple: "got", pastParticiple: "got", translation: "dostać" },
+            { infinitive: "give", pastSimple: "gave", pastParticiple: "given", translation: "dać" },
+            { infinitive: "go", pastSimple: "went", pastParticiple: "gone", translation: "iść" },
+            { infinitive: "grow", pastSimple: "grew", pastParticiple: "grown", translation: "rosnąć" },
+            { infinitive: "hang", pastSimple: "hung", pastParticiple: "hung", translation: "wisieć, powiesić" },
+            { infinitive: "have", pastSimple: "had", pastParticiple: "had", translation: "mieć" },
+            { infinitive: "hear", pastSimple: "heard", pastParticiple: "heard", translation: "słyszeć" },
+            { infinitive: "hide", pastSimple: "hid", pastParticiple: "hidden", translation: "chować" },
+            { infinitive: "hit", pastSimple: "hit", pastParticiple: "hit", translation: "uderzyć" },
+            { infinitive: "hold", pastSimple: "held", pastParticiple: "held", translation: "trzymać" },
+            { infinitive: "hurt", pastSimple: "hurt", pastParticiple: "hurt", translation: "zranić" },
+            { infinitive: "keep", pastSimple: "kept", pastParticiple: "kept", translation: "trzymać" },
+            { infinitive: "kneel", pastSimple: "knelt / kneeled", pastParticiple: "knelt / kneeled", translation: "klękać, klęczeć" },
+            { infinitive: "knit", pastSimple: "knitted", pastParticiple: "knitted", translation: "robić na drutach" },
+            { infinitive: "know", pastSimple: "knew", pastParticiple: "known", translation: "wiedzieć" },
+            { infinitive: "lay", pastSimple: "laid", pastParticiple: "laid", translation: "położyć" },
+            { infinitive: "lead", pastSimple: "led", pastParticiple: "led", translation: "prowadzić" },
+            { infinitive: "lean", pastSimple: "leant / leaned", pastParticiple: "leant / leaned", translation: "przechylać się" },
+            { infinitive: "leap", pastSimple: "leapt / leaped", pastParticiple: "leapt / leaped", translation: "skakać" },
+            { infinitive: "learn", pastSimple: "learned / learnt", pastParticiple: "learned / learnt", translation: "uczyć się" },
+            { infinitive: "leave", pastSimple: "left", pastParticiple: "left", translation: "opuścić" },
+            { infinitive: "lend", pastSimple: "lent", pastParticiple: "lent", translation: "pożyczyć (komuś)" },
+            { infinitive: "let", pastSimple: "let", pastParticiple: "let", translation: "pozwolić" },
+            { infinitive: "lie", pastSimple: "lay", pastParticiple: "lain", translation: "leżeć" },
+            { infinitive: "light", pastSimple: "lit", pastParticiple: "lit", translation: "zapalać" },
+            { infinitive: "lose", pastSimple: "lost", pastParticiple: "lost", translation: "zgubić" },
+            { infinitive: "make", pastSimple: "made", pastParticiple: "made", translation: "zrobić" },
+            { infinitive: "mean", pastSimple: "meant", pastParticiple: "meant", translation: "znaczyć" },
+            { infinitive: "meet", pastSimple: "met", pastParticiple: "met", translation: "spotkać" },
+            { infinitive: "mistake", pastSimple: "mistook", pastParticiple: "mistaken", translation: "pomylić" },
+            { infinitive: "mow", pastSimple: "mowed", pastParticiple: "mown / mowed", translation: "kosić, strzyc" },
+            { infinitive: "overcome", pastSimple: "overcame", pastParticiple: "overcome", translation: "przezwyciężyć, pokonać" }
+        ];
+
+        let availableWords = [];
+        let currentWord = {};
+        let scoreCorrect = 0;
+        let scoreTotal = 0;
+        let questionNumber = 0;
+        let currentStep = 0; // 0: infinitive, 1: pastSimple, 2: pastParticiple
+
+        function initQueue() {
+            availableWords = [...originalWords];
+            for (let i = availableWords.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [availableWords[i], availableWords[j]] = [availableWords[j], availableWords[i]];
+            }
+            questionNumber = 0;
+        }
+
+        function loadNextQuestion() {
+            if (availableWords.length === 0) {
+                initQueue();
+            }
+
+            questionNumber++;
+            currentWord = availableWords.pop();
+            currentStep = 0;
+
+            for (let i = 0; i < 3; i++) {
+                const input = document.getElementById("input-" + i);
+                input.value = "";
+                input.disabled = (i !== 0);
+                input.style.borderColor = "#555";
+            }
+
+            document.getElementById("feedback").innerHTML = "";
+            document.getElementById("next-btn").style.display = "none";
+            document.getElementById("val-translation").innerText = currentWord.translation;
+
+            document.getElementById("counter-text").innerText = `Statystyki: Poprawne ${scoreCorrect} / Wszystkie ${scoreTotal}`;
+            document.getElementById("progress-text").innerText = `Słówko: ${questionNumber} / ${originalWords.length}`;
+            
+            document.getElementById("input-0").focus();
+        }
+
+        function checkField(userInput, correctAnswer) {
+            userInput = userInput.trim().toLowerCase();
+            correctAnswer = correctAnswer.toLowerCase();
+            
+            if (userInput === correctAnswer) return true;
+            if (correctAnswer.includes("/")) {
+                let parts = correctAnswer.split("/").map(s => s.trim());
+                if (parts.includes(userInput)) return true;
+            }
+            if (correctAnswer.includes(",")) {
+                let parts = correctAnswer.split(",").map(s => s.trim());
+                if (parts.includes(userInput)) return true;
+            }
+            return false;
+        }
+
+        function handleStep() {
+            const inputField = document.getElementById("input-" + currentStep);
+            const userInput = inputField.value.trim();
+            const feedbackEl = document.getElementById("feedback");
+
+            if (userInput === "") {
+                feedbackEl.innerHTML = "<span class='incorrect'>Musisz coś wpisać!</span>";
+                return;
+            }
+
+            scoreTotal++;
+
+            let correctAnswers = [currentWord.infinitive, currentWord.pastSimple, currentWord.pastParticiple];
+            let isOk = checkField(userInput, correctAnswers[currentStep]);
+
+            inputField.disabled = true;
+
+            if (isOk) {
+                scoreCorrect++;
+                inputField.style.borderColor = "#4CAF50";
+                feedbackEl.innerHTML = "<span class='correct'>Dobrze! 🎉</span>";
+            } else {
+                inputField.style.borderColor = "#f44336";
+                feedbackEl.innerHTML = `<span class='incorrect'>Źle. Poprawna forma to: <strong>${correctAnswers[currentStep]}</strong></span>`;
+            }
+
+            document.getElementById("counter-text").innerText = `Statystyki: Poprawne ${scoreCorrect} / Wszystkie ${scoreTotal}`;
+
+            currentStep++;
+
+            if (currentStep < 3) {
+                // Przejdź do kolejnego pola
+                const nextInput = document.getElementById("input-" + currentStep);
+                nextInput.disabled = false;
+                nextInput.focus();
+            } else {
+                // To było ostatnie pole – pokaż przycisk następnego słówka
+                document.getElementById("next-btn").style.display = "inline-block";
+                document.getElementById("next-btn").focus();
+            }
+        }
+
+        // Nasłuchiwanie klawisza Enter dla każdego pola z osobna
+        for (let i = 0; i < 3; i++) {
+            document.getElementById("input-" + i).addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    handleStep();
+                }
+            });
+        }
+
+        window.onload = function() {
+            initQueue();
+            loadNextQuestion();
+        };
+    </script>
+</body>
+</html>
